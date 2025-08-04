@@ -6,15 +6,14 @@ import { usersTable } from '../db/schema';
 import { type LoginInput } from '../schema';
 import { login } from '../handlers/login';
 
-const testUserData = {
-  email: 'test@example.com',
-  password_hash: 'hashed_password',
-  name: 'Test User'
-};
+// We'll create the test user data with proper password hash in each test
+const testUserEmail = 'test@example.com';
+const testUserName = 'Test User';
+const testPassword = 'password';
 
 const testLoginInput: LoginInput = {
-  email: 'test@example.com',
-  password: 'password'
+  email: testUserEmail,
+  password: testPassword
 };
 
 describe('login', () => {
@@ -22,16 +21,23 @@ describe('login', () => {
   afterEach(resetDB);
 
   it('should authenticate user with valid credentials', async () => {
-    // Create test user first
+    // Create test user with properly hashed password
+    const passwordHash = await Bun.password.hash(testPassword);
+    const testUserData = {
+      email: testUserEmail,
+      password_hash: passwordHash,
+      name: testUserName
+    };
+    
     await db.insert(usersTable)
       .values(testUserData)
       .execute();
 
     const result = await login(testLoginInput);
 
-    expect(result.email).toEqual('test@example.com');
-    expect(result.name).toEqual('Test User');
-    expect(result.password_hash).toEqual('hashed_password');
+    expect(result.email).toEqual(testUserEmail);
+    expect(result.name).toEqual(testUserName);
+    expect(result.password_hash).toEqual(passwordHash);
     expect(result.id).toBeDefined();
     expect(result.created_at).toBeInstanceOf(Date);
     expect(result.updated_at).toBeInstanceOf(Date);
@@ -47,13 +53,20 @@ describe('login', () => {
   });
 
   it('should throw error for invalid password', async () => {
-    // Create test user first
+    // Create test user with properly hashed password
+    const passwordHash = await Bun.password.hash(testPassword);
+    const testUserData = {
+      email: testUserEmail,
+      password_hash: passwordHash,
+      name: testUserName
+    };
+    
     await db.insert(usersTable)
       .values(testUserData)
       .execute();
 
     const invalidInput: LoginInput = {
-      email: 'test@example.com',
+      email: testUserEmail,
       password: 'wrongpassword'
     };
 
@@ -61,7 +74,14 @@ describe('login', () => {
   });
 
   it('should return user data from database', async () => {
-    // Create test user first
+    // Create test user with properly hashed password
+    const passwordHash = await Bun.password.hash(testPassword);
+    const testUserData = {
+      email: testUserEmail,
+      password_hash: passwordHash,
+      name: testUserName
+    };
+    
     const insertResult = await db.insert(usersTable)
       .values(testUserData)
       .returning()

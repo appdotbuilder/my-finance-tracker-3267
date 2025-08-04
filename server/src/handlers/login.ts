@@ -18,10 +18,9 @@ export const login = async (input: LoginInput): Promise<User> => {
 
     const user = users[0];
 
-    // In a real implementation, you would verify the password hash here
-    // For now, we'll use a simple comparison as a placeholder
-    // TODO: Replace with proper password verification using bcrypt or similar
-    if (input.password !== 'password') {
+    // Verify password using Bun's built-in password verification
+    const isPasswordValid = await Bun.password.verify(input.password, user.password_hash);
+    if (!isPasswordValid) {
       throw new Error('Invalid email or password');
     }
 
