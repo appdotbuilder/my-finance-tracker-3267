@@ -142,13 +142,13 @@ export async function getDashboardData(userId: number): Promise<DashboardData> {
       .where(
         and(
           eq(transactionsTable.user_id, userId),
+          eq(categoriesTable.type, 'expense'),
           gte(transactionsTable.transaction_date, currentMonthStart),
           lte(transactionsTable.transaction_date, currentMonthEnd)
         )
       )
       .groupBy(categoriesTable.id, categoriesTable.name, categoriesTable.type)
       .orderBy(desc(sum(transactionsTable.amount)))
-      .limit(5)
       .execute();
 
     const topCategories = topCategoriesData.map(row => ({
