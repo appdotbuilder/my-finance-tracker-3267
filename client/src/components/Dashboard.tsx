@@ -134,7 +134,7 @@ export function Dashboard({ data, formatCurrency, onRefresh }: DashboardProps) {
           </CardContent>
         </Card>
 
-        {/* Top Categories */}
+        {/* Top Categories with Visual Chart */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -142,32 +142,109 @@ export function Dashboard({ data, formatCurrency, onRefresh }: DashboardProps) {
               <span>Kategori Teratas</span>
             </CardTitle>
             <CardDescription>
-              Kategori dengan pengeluaran tertinggi
+              Distribusi pengeluaran berdasarkan kategori
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {top_categories.length === 0 ? (
-              <p className="text-gray-500 text-center py-4">
-                Belum ada data kategori
-              </p>
-            ) : (
-              top_categories
+            {(() => {
+              const expenseCategories = top_categories
                 .filter((cat) => cat.category_type === 'expense')
-                .slice(0, 5)
-                .map((category) => (
-                  <div key={category.category_id} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium">{category.category_name}</p>
-                      <p className="text-sm text-gray-600">{category.transaction_count} transaksi</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-red-600">
-                        {formatCurrency(category.total_amount)}
-                      </p>
+                .sort((a, b) => b.total_amount - a.total_amount);
+
+              if (expenseCategories.length === 0) {
+                return (
+                  <p className="text-gray-500 text-center py-4">
+                    Belum ada data kategori pengeluaran
+                  </p>
+                );
+              }
+
+              const colors = [
+                { bg: 'bg-red-500', text: 'text-red-700', light: 'bg-red-100' },
+                { bg: 'bg-orange-500', text: 'text-orange-700', light: 'bg-orange-100' },
+                { bg: 'bg-yellow-500', text: 'text-yellow-700', light: 'bg-yellow-100' },
+                { bg: 'bg-green-500', text: 'text-green-700', light: 'bg-green-100' },
+                { bg: 'bg-blue-500', text: 'text-blue-700', light: 'bg-blue-100' },
+                { bg: 'bg-purple-500', text: 'text-purple-700', light: 'bg-purple-100' },
+                { bg: 'bg-pink-500', text: 'text-pink-700', light: 'bg-pink-100' },
+                { bg: 'bg-indigo-500', text: 'text-indigo-700', light: 'bg-indigo-100' },
+              ];
+
+              const totalAmount = expenseCategories.reduce((sum, cat) => sum + cat.total_amount, 0);
+
+              return (
+                <div className="space-y-6">
+                  {/* Visual Bar Chart */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-sm text-gray-700 mb-3">📊 Distribusi Visual</h4>
+                    {expenseCategories.slice(0, 6).map((category, index) => {
+                      const percentage = ((category.total_amount / totalAmount) * 100);
+                      const color = colors[index % colors.length];
+                      
+                      return (
+                        <div key={category.category_id} className="space-y-2">
+                          <div className="flex justify-between items-center text-sm">
+                            <div className="flex items-center space-x-2">
+                              <div className={`w-3 h-3 rounded-full ${color.bg}`}></div>
+                              <span className="font-medium">{category.category_name}</span>
+                            </div>
+                            <span className={`font-bold ${color.text}`}>
+                              {percentage.toFixed(1)}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className={`${color.bg} h-2 rounded-full transition-all duration-500 ease-out`}
+                              style={{ width: `${Math.max(percentage, 2)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Category Summary Cards */}
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm text-gray-700 mb-3">💰 Detail Kategori</h4>
+                    {expenseCategories.slice(0, 5).map((category, index) => {
+                      const color = colors[index % colors.length];
+                      const percentage = ((category.total_amount / totalAmount) * 100);
+                      
+                      return (
+                        <div key={category.category_id} className={`flex justify-between items-center p-4 ${color.light} rounded-lg border-l-4 ${color.bg.replace('bg-', 'border-')}`}>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <p className="font-semibold text-gray-900">{category.category_name}</p>
+                              <span className={`text-xs px-2 py-1 rounded-full ${color.bg} text-white font-medium`}>
+                                {percentage.toFixed(1)}%
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">{category.transaction_count} transaksi</p>
+                          </div>
+                          <div className="text-right ml-4">
+                            <p className={`font-bold text-lg ${color.text}`}>
+                              {formatCurrency(category.total_amount)}
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Total Summary */}
+                  <div className="bg-gray-50 p-4 rounded-lg border-2 border-dashed border-gray-300">
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold text-gray-700">
+                        📋 Total Pengeluaran ({expenseCategories.length} kategori)
+                      </span>
+                      <span className="font-bold text-xl text-red-600">
+                        {formatCurrency(totalAmount)}
+                      </span>
                     </div>
                   </div>
-                ))
-            )}
+                </div>
+              );
+            })()}
           </CardContent>
         </Card>
       </div>
